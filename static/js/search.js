@@ -10,6 +10,9 @@ function initLunr() {
         baseurl = baseurl+'/'
     };
 
+    // Prepare the regex for filtering taxonomy pages
+    var re = new RegExp("^" + baseurl + "tags\/", "g");
+
     // First retrieve the index file
     $.getJSON(baseurl +"index.json")
         .done(function(index) {
@@ -19,21 +22,28 @@ function initLunr() {
             lunrIndex = lunr(function() {
                 this.ref("uri");
                 this.field('title', {
-		    boost: 15
+            boost: 15
                 });
                 this.field('tags', {
-		    boost: 10
+            boost: 10
                 });
                 this.field("content", {
-		    boost: 5
+            boost: 5
                 });
-				
+                
                 this.pipeline.remove(lunr.stemmer);
                 this.searchPipeline.remove(lunr.stemmer);
-				
+
                 // Feed lunr with each file and let lunr actually index them
                 pagesIndex.forEach(function(page) {
-		    this.add(page);
+                    // Exlcude taxonomy indexes from search results
+                    if (page.uri.match(re)) {
+                        return;
+                    } else if (page.tags.includes('skipIndexing')) {
+                        return;
+                    } else {
+                        this.add(page);
+                    }
                 }, this);
             })
         })
@@ -70,11 +80,15 @@ $( document ).ready(function() {
         },
         /* renderItem displays individual search results */
         renderItem: function(item, term) {
-            var numContextWords = 2;
+            var numContextWords = 3;
             var text = item.content.match(
                 "(?:\\s?(?:[\\w]+)\\s?){0,"+numContextWords+"}" +
                     term+"(?:\\s?(?:[\\w]+)\\s?){0,"+numContextWords+"}");
             item.context = text;
+            item.pretty_tags = []
+            item.tags.forEach(function(tag) {
+                item.pretty_tags.push("<span class='fas fa-tag'></span> " + tag);
+            })
             return '<div class="autocomplete-suggestion" ' +
                 'data-term="' + term + '" ' +
                 'data-title="' + item.title + '" ' +
@@ -82,7 +96,9 @@ $( document ).ready(function() {
                 'data-context="' + item.context + '">' +
                 '» ' + item.title +
                 '<div class="context">' +
-                (item.context || '') +'</div>' +
+                (item.context || '') + '</div>' +
+                '<div class="tags">' +
+                (item.pretty_tags.join('<br>') || '') + '</div>' +
                 '</div>';
         },
         /* onSelect callback fires when a search suggestion is chosen */
