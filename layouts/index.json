@@ -1,12 +1,24 @@
 [{{ range $index, $page := .Site.Pages }}
+{{- $tag_index := readFile "tag_index.yml" | unmarshal -}}
+{{- $synonym_count := 0 -}}
 {{- if ne $page.Type "json" -}}
 {{- if and $index (gt $index 0) -}},{{- end }}
 {
 	"uri": "{{ $page.Permalink }}",
-	"title": "{{ htmlEscape $page.Title}}",
+	"title": "{{ htmlEscape $page.Title }}",
 	"tags": [{{ range $tindex, $tag := $page.Params.tags }}{{ if $tindex }}, {{ end }}"{{ $tag| htmlEscape }}"{{ end }}],
-	"description": "{{ htmlEscape .Description}}",
-	"content": {{$page.Plain | jsonify}}
+	"synonyms": [{{- range $tindex, $tag := $page.Params.tags -}}
+			{{- range $auth_tag, $value := $tag_index -}}
+				{{- if eq ($tag | lower) ($auth_tag | lower) -}}
+					{{- if (index $value "Synonyms") -}}
+						{{- if $synonym_count }}, {{- end -}}{{- $synonym_count = add 1 $synonym_count -}}
+						"{{ delimit (apply (index $value "Synonyms") "safeHTML" ".") "\", \"" -}}"
+						{{- end -}}
+					{{- end -}}
+				{{- end -}}
+				{{- end -}}],
+	"description": "{{ htmlEscape .Description }}",
+	"content": {{ $page.Plain | jsonify }}
 }
 {{- end -}}
 {{- end -}}]
