@@ -14,23 +14,27 @@ function initLunr() {
     var re = new RegExp("^" + baseurl + "tags\/", "g");
 
     // First retrieve the index file
-    $.getJSON(baseurl +"index.json")
+    $.getJSON(baseurl + "index.json")
         .done(function(index) {
             pagesIndex = index;
+
             // Set up lunrjs by declaring the fields we use
             // Also provide their boost level for the ranking
             lunrIndex = lunr(function() {
                 this.ref("uri");
                 this.field('title', {
-            boost: 15
+            boost: 16
                 });
                 this.field('tags', {
-            boost: 10
+            boost: 8
+                });
+                this.field('synonyms', {
+            boost: 4
                 });
                 this.field("content", {
-            boost: 5
+            boost: 2
                 });
-                
+
                 this.pipeline.remove(lunr.stemmer);
                 this.searchPipeline.remove(lunr.stemmer);
 
@@ -39,7 +43,8 @@ function initLunr() {
                     // Exlcude taxonomy indexes from search results
                     if (page.uri.match(re)) {
                         return;
-                    } else if (page.tags.includes('skipIndexing')) {
+                    // Exlude pages tagged with skipIndexing
+                    } else if ('tags' in page && page.tags.includes('skipIndexing')) {
                         return;
                     } else {
                         this.add(page);
