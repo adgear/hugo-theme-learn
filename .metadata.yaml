@@ -1,0 +1,16 @@
+metadata:
+  name: hugo-theme-learn
+  description: 
+  labels:
+    platform: ep
+    jira-project: EP
+    jira-board: 159
+    public: false
+    sensitive: false
+  links:
+    - title: Engineering Platform
+      url: https://adgear.atlassian.net/wiki/spaces/ENG/pages/19053052021/EP+Engineering+Platform
+spec:
+  owner: cg-ep
+  type: infrastructure
+  lifecycle: production
